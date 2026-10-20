@@ -85,7 +85,9 @@ async def match_signals(client: AsyncTypeSafeClient, name: str, inst: dict, fold
         questions[uda] = Choice(
             instructions=(
                 f"Which signal in PLC folder `folder` measures or reports the same thing as the galaxy attribute "
-                f"`instance.udas.{uda}`? Judge by meaning; the engineering units may differ, and scaling is handled separately."
+                f"`instance.udas.{uda}`? Judge by meaning; the engineering units may differ, and scaling is handled separately. "
+                "The attribute will be bound as an input, so the signal must be a measurement or status feedback from the "
+                "field. A setpoint, alarm limit, command, or mode selector is never the right signal, even if it is the closest name."
             ),
             criteria=candidates,
         )
@@ -99,19 +101,30 @@ async def match_signals(client: AsyncTypeSafeClient, name: str, inst: dict, fold
 async def map_galaxy(client: AsyncTypeSafeClient, galaxy: dict, browse: dict) -> list[Mapping]:
     devices = await match_devices(client, galaxy, browse)
 
-    matched = {name: a for name, a in devices.items() if a.choice != "none"}
+    # As with signals: a confident "none" means no device; an unsure one carries on with the best
+    # candidate folder, and everything found under it goes to review.
+    folder_of, device_notes = {}, {}
+    for name, a in devices.items():
+        if a.choice != "none":
+            folder_of[name] = a.choice
+        elif a.confidence < AUTO_CONFIDENCE:
+            best, p = max(((k, v) for k, v in a.probabilities.items() if k != "none"), key=lambda kv: kv[1])
+            folder_of[name] = best
+            device_notes[name] = f"Jev leaned 'no device' (confidence {a.confidence:.2f}); best candidate {best} p={p:.2f}"
+
     signals = await asyncio.gather(*(
-        match_signals(client, name, galaxy[name], a.choice, browse[a.choice]) for name, a in matched.items()
+        match_signals(client, name, galaxy[name], folder, browse[folder]) for name, folder in folder_of.items()
     ))
-    signals = dict(zip(matched, signals))
-    folder_claims = Counter(a.choice for a in matched.values())
+    signals = dict(zip(folder_of, signals))
+    folder_claims = Counter(folder_of.values())
 
     mappings = []
     for name, inst in galaxy.items():
         dev = devices[name]
-        if dev.choice == "none":
+        if name not in folder_of:
             mappings += [Mapping(name, uda, None, UNMAPPED, ["no device folder on this server"], dev.confidence) for uda in inst["udas"]]
             continue
+        folder = folder_of[name]
         sig = signals[name]
         for uda, spec in inst["udas"].items():
             if uda in sig["skipped"]:
@@ -127,16 +140,18 @@ async def map_galaxy(client: AsyncTypeSafeClient, galaxy: dict, browse: dict) ->
                     continue
                 reasons.append(f"Jev leaned 'none' (confidence {pt.confidence:.2f}); best candidate {signal} p={p:.2f}")
 
-            node = browse[dev.choice][signal]
-            if dev.confidence < AUTO_CONFIDENCE:
+            node = browse[folder][signal]
+            if name in device_notes:
+                reasons.append(device_notes[name])
+            elif dev.confidence < AUTO_CONFIDENCE:
                 reasons.append(f"device match confidence {dev.confidence:.2f}")
-            if folder_claims[dev.choice] > 1:
-                reasons.append(f"{dev.choice} also matched to another object")
+            if folder_claims[folder] > 1:
+                reasons.append(f"{folder} also matched to another object")
             if pt.choice != "none" and pt.confidence < AUTO_CONFIDENCE:
                 reasons.append(f"signal match confidence {pt.confidence:.2f}")
             if spec.get("units") and node.get("eu") != spec["units"]:
                 reasons.append(f"units differ: galaxy {spec['units']}, PLC {node.get('eu') or 'none'}; needs scaling")
-            mappings.append(Mapping(name, uda, f"{dev.choice}.{signal}", REVIEW if reasons else AUTO, reasons,
+            mappings.append(Mapping(name, uda, f"{folder}.{signal}", REVIEW if reasons else AUTO, reasons,
                                     dev.confidence, pt.confidence))
 
     # One node feeding two attributes is almost always a mapping error.

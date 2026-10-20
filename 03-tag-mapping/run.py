@@ -1,14 +1,16 @@
 """Map the sample galaxy onto the sample OPC-UA browse and score against expected.json.
 
-    python run.py
+    python run.py                    # the hand-written sample in this folder
+    python run.py dirty/medium-7     # a generated namespace from dirtier.py
 
-Writes binding_plan.json: GRAccess input-source strings for the auto rows, the review
+Writes binding_plan.json next to the input files: GRAccess input-source strings for the auto rows, the review
 queue, and the OI Gateway Device Items the bound nodes need.
 """
 
 import asyncio
 import json
 import os
+import sys
 import time
 from collections import Counter
 from pathlib import Path
@@ -30,10 +32,10 @@ def load_env(path: Path) -> None:
             os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
 
 
-async def main() -> None:
-    galaxy = json.loads((HERE / "galaxy.json").read_text())
-    browse = json.loads((HERE / "opcua_browse.json").read_text())
-    expected = json.loads((HERE / "expected.json").read_text())
+async def main(data: Path) -> None:
+    galaxy = json.loads((data / "galaxy.json").read_text())
+    browse = json.loads((data / "opcua_browse.json").read_text())
+    expected = json.loads((data / "expected.json").read_text())
 
     async with AsyncTypeSafeClient() as client:
         start = time.perf_counter()
@@ -59,7 +61,7 @@ async def main() -> None:
         "unmapped": [f"{m.instance}.{m.uda}" for m in mappings if m.status == UNMAPPED],
         "device_items": sorted({m.device_item for m in mappings if m.status in (AUTO, REVIEW)}),
     }
-    (HERE / "binding_plan.json").write_text(json.dumps(plan, indent=2))
+    (data / "binding_plan.json").write_text(json.dumps(plan, indent=2))
 
     n = len(mappings)
     total_ok = sum(v for (_, ok), v in correct.items() if ok)
@@ -71,4 +73,4 @@ async def main() -> None:
 
 if __name__ == "__main__":
     load_env(HERE.parent / ".env")
-    asyncio.run(main())
+    asyncio.run(main(HERE / sys.argv[1] if len(sys.argv) > 1 else HERE))

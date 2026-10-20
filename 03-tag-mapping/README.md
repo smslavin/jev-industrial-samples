@@ -76,6 +76,72 @@ and Jev answered `none` at 0.53 confidence. There were two problems:
    `none` now goes to review with the best candidate from the probability
    distribution. Only a confident `none` is marked unmapped.
 
+## Stress test: a spoofed brownfield from the clean AvevaWaterOPC model
+
+There's no messy dev galaxy to test against, so [dirtier.py](dirtier.py) generates
+messy PLC namespaces. It starts from the clean AvevaWaterOPC model (10 objects, 34
+attributes, copied from `opcua-mcp/simulator.py`) and rebuilds the OPC-UA side
+the way a PLC programmer might have, with a seed. It also writes the answer key.
+The galaxy side stays clean, as it usually is on a brownfield job.
+
+| Level | Mess |
+| --- | --- |
+| easy | One naming convention (`PLC1.RW_PMP_1.FT_PV`), 20 % blank descriptions |
+| medium | Adds ISA loop folders on PLC2 (`PLC2.U501.FT501_PV`), 50 % blank, 30 % changed units (psi, gpm, hp, 0–1 fractions), look-alike decoys (setpoints, limits, commands, H/L alarms, raw counts), 10 % missing signals, spare tags |
+| hard | Adds Siemens-style German data blocks on PLC3 (`PLC3.DB10.BM_LAEUFT`), 80 % blank, 50 % changed units, 15 % missing |
+| swapped | Medium, plus raw water pumps 1 and 2 wired to each other's PLC folders |
+
+```
+..\.venv\Scripts\python dirtier.py hard 1        # write dirty/hard-1/*.json
+..\.venv\Scripts\python run.py dirty/hard-1      # map it, print every row
+..\.venv\Scripts\python sweep.py                 # every level x seeds 1-3
+```
+
+### Sweep results (jev-latest, 2026-10-20, seeds 1–3, 34 attributes each)
+
+| Level | Correct | Auto | **Wrong auto** | Review | Unmapped | Missed (real node marked unmapped) |
+| --- | --- | --- | --- | --- | --- | --- |
+| easy | 34/34 | 34 | **0** | 0 | 0 | 0 |
+| medium | 28–31 | 15–17 | **0** | 8–17 | 0–11 | 0–5 |
+| hard | 23–26 | 9 | **0** | 12–21 | 4–13 | 0–6 |
+| swapped | 20–23 | 15–17 | **5–6** | 8–17 | 0–11 | 0–7 |
+
+Wrong-auto is the number that matters: a binding that skips review and is wrong.
+Review and unmapped rows cost an engineer's time. A wrong auto row costs a bad
+binding. As the mess increases, the mapper sends more rows to review instead of
+guessing.
+
+### What the sweep found
+
+1. **A decoy chosen when the real signal is missing.** The first sweep had 2 wrong
+   auto rows on `hard`: with `FT_PV` absent, Jev picked `FT_SP` (a setpoint) for
+   `Flow`. The fix was domain knowledge the question hadn't stated. These are
+   InputSource bindings, so the node must be a measurement or feedback, never a
+   setpoint, limit, command, or selector. After adding that to the question,
+   `hard` dropped to 0 wrong auto, and `easy` went from 26–28 auto rows to all 34.
+2. **Swapped numbering can't be caught from names.** Every wrong auto row in
+   `swapped` is the swapped pump pair. When `RawWater_01` is wired to `RW_PMP_2`,
+   nothing in the namespace says so, and a person would make the same mistake.
+   This needs a field check: bump the pump and see which `RUN_FB` changes. That
+   belongs in a commissioning step, not in better matching.
+3. **Unsure "no device" now goes to review.** Stage 1 uses the same runner-up rule
+   as stage 2.
+4. **Look-alike devices produce a confident "neither".** The chlorine and fluoride
+   skids sit in ISA loop folders `U501` / `U502` with the same signal lists and no
+   descriptions. Nothing says which is chlorine. Jev answers `none` with 0.90–0.95
+   confidence, so 5–6 real rows end up unmapped. A single Choice can't express
+   "one of these two, I can't tell which". The next step is one Noul per candidate
+   folder in stage 1, so code sees the tie and sends both candidates to review.
+   The current failure is in the safe direction.
+5. **One confident German miss.** `LAMPE_BH` (Lampe Betriebsstunden, lamp hours)
+   with a blank description was rejected for `LampHours` with 0.99 confidence.
+   The error is in the safe direction, and it is the kind of abbreviation a site
+   glossary in the question's criteria would fix.
+
+The naming rules are this author's idea of a messy plant, not field data. Treat
+the sweep as a stress test of the mapper's failure modes, not as a measure of
+real-world accuracy.
+
 ## Caveats
 
 - Some confidences move a few points between runs. `Level` sits right at the 0.8
@@ -85,7 +151,5 @@ and Jev answered `none` at 0.53 confidence. There were two problems:
 - Stage 1 lists every folder in a single Choice. A real server with hundreds of
   devices needs a code-side shortlist first, for example by area or name
   similarity.
-- A low-confidence `none` at the device stage is still treated as unmapped. The
-  same runner-up logic used in stage 2 should be applied there.
 - This is one plant's naming. Run it against a real browse export and a real
   galaxy before trusting the 0.8 threshold.

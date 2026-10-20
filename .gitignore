@@ -3,3 +3,4 @@ __pycache__/
 .env
 decisions.jsonl
 binding_plan.json
+dirty/
