@@ -1,0 +1,49 @@
+{
+  "PLC1.RW_PMP_1": {
+    "RUN_FB":   {"data_type": "Boolean", "description": "Run feedback", "value": true},
+    "FLT":      {"data_type": "Boolean", "description": "", "value": false},
+    "AUTO_SEL": {"data_type": "Boolean", "description": "Auto selected", "value": true},
+    "SPD_FB":   {"data_type": "Float", "description": "Speed feedback", "eu": "%", "value": 82.5},
+    "SPD_REF":  {"data_type": "Float", "description": "Speed reference", "eu": "%", "value": 85.0},
+    "DISCH_PT": {"data_type": "Float", "description": "", "eu": "bar", "value": 4.1},
+    "RUN_HRS":  {"data_type": "Float", "description": "", "eu": "h", "value": 18234.5}
+  },
+  "PLC1.RW_PMP_2": {
+    "RUN_FB":   {"data_type": "Boolean", "description": "Run feedback", "value": false},
+    "FLT":      {"data_type": "Boolean", "description": "", "value": false},
+    "AUTO_SEL": {"data_type": "Boolean", "description": "Auto selected", "value": true},
+    "SPD_FB":   {"data_type": "Float", "description": "Speed feedback", "eu": "%", "value": 0.0},
+    "SPD_REF":  {"data_type": "Float", "description": "Speed reference", "eu": "%", "value": 0.0},
+    "DISCH_PT": {"data_type": "Float", "description": "", "eu": "psi", "value": 2.3}
+  },
+  "PLC1.SYS": {
+    "HEARTBEAT": {"data_type": "Int16", "description": "PLC heartbeat counter", "value": 1734},
+    "CPU_LOAD":  {"data_type": "Float", "description": "", "eu": "%", "value": 23.0},
+    "COMM_OK":   {"data_type": "Boolean", "description": "Comms healthy", "value": true}
+  },
+  "PLC2.CW_LT301": {
+    "PV": {"data_type": "Float", "description": "Level", "eu": "m", "value": 3.42},
+    "H":  {"data_type": "Boolean", "description": "High", "value": false},
+    "HH": {"data_type": "Boolean", "description": "High high", "value": false},
+    "L":  {"data_type": "Boolean", "description": "Low", "value": false}
+  },
+  "PLC2.NAOCL_PMP": {
+    "RUN":        {"data_type": "Boolean", "description": "Running", "value": true},
+    "SPM":        {"data_type": "Float", "description": "Stroke rate", "eu": "1/min", "value": 42.0},
+    "FLOW":       {"data_type": "Float", "description": "", "eu": "L/h", "value": 6.3},
+    "DAY_TK_LSL": {"data_type": "Boolean", "description": "", "value": false}
+  },
+  "PLC3.FLT_1": {
+    "DP":       {"data_type": "Float", "description": "Diff press", "eu": "m", "value": 1.2},
+    "TURB_EFF": {"data_type": "Float", "description": "", "eu": "NTU", "value": 0.08},
+    "TURB_INF": {"data_type": "Float", "description": "", "eu": "NTU", "value": 2.4},
+    "BW_STEP":  {"data_type": "Int16", "description": "Backwash sequence step", "value": 0}
+  },
+  "PLC3.FLT_2": {
+    "DP":       {"data_type": "Float", "description": "Diff press", "eu": "m", "value": 0.9},
+    "TURB_EFF": {"data_type": "Float", "description": "", "eu": "NTU", "value": 0.06},
+    "TURB_INF": {"data_type": "Float", "description": "", "eu": "NTU", "value": 2.4},
+    "BW_STEP":  {"data_type": "Int16", "description": "Backwash sequence step", "value": 3},
+    "BW_ACT":   {"data_type": "Boolean", "description": "", "value": true}
+  }
+}
