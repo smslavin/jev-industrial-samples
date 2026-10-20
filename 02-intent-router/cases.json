@@ -1,0 +1,20 @@
+[
+  {"id": "tank-level",        "request": "What's the level in T-200?",                                      "expected": "code", "target": "LT_200", "attribute": "PV"},
+  {"id": "terse-level",       "request": "lvl t200??",                                                      "expected": "code", "target": "LT_200", "attribute": "PV"},
+  {"id": "cw-pump-running",   "request": "Is the cooling water pump running?",                              "expected": "code", "target": "P_301", "attribute": "Status"},
+  {"id": "jacket-sp",         "request": "what's the jacket temp setpoint on the reactor",                  "expected": "code", "target": "TIC_101", "attribute": "SP"},
+  {"id": "chlorine-residual", "request": "How much chlorine is in the treated water right now?",            "expected": "code", "target": "AIT_520", "attribute": "PV"},
+  {"id": "drum-pressure",     "request": "Boiler drum pressure?",                                           "expected": "code", "target": "PT_410", "attribute": "PV"},
+  {"id": "pump-template",     "request": "What template is P_301 built from?",                              "expected": "code", "target": "P_301", "attribute": "template"},
+  {"id": "mixer-area",        "request": "Which area is the mixer in?",                                     "expected": "code", "target": "M_220", "attribute": "area"},
+  {"id": "raise-sp",          "request": "Raise TIC_101 setpoint to 85.",                                   "expected": "agent+gate"},
+  {"id": "mixer-manual",      "request": "Put the mixer in manual.",                                        "expected": "agent+gate"},
+  {"id": "ack-alarm",         "request": "Acknowledge the alarm on LT_200.",                                "expected": "agent+gate"},
+  {"id": "why-trips",         "request": "Why does the boiler keep tripping on startup?",                   "expected": "agent"},
+  {"id": "two-items",         "request": "What are the T-200 level and the raw water flow?",                "expected": "agent"},
+  {"id": "no-such-tag",       "request": "What's the steam header pressure?",                               "expected": "agent"},
+  {"id": "which-cw-pump",     "request": "Is the standby pump available?",                                  "expected": "code", "target": "P_302", "attribute": "Status"},
+  {"id": "batches",           "request": "How many batches did we run on R-100 yesterday?",                 "expected": "agent"},
+  {"id": "weather",           "request": "What's the weather tomorrow?",                                    "expected": "refused"},
+  {"id": "haiku",             "request": "Write me a haiku about pumps.",                                   "expected": "refused"}
+]

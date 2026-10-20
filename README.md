@@ -8,9 +8,13 @@ needs to understand meaning.
 | Sample | Shows |
 | --- | --- |
 | [01-write-gate](01-write-gate/) | Gating an agent's proposed plant writes: ALLOW / CONFIRM / ESCALATE |
+| [02-intent-router](02-intent-router/) | Routing operator requests: simple reads in code, everything else to the agent |
 
-Planned: intent router in front of the agent, OPC-UA brownfield tag mapping, alarm
-flood triage, verifying the agent's answers against its tool results.
+Taken together: the router (02) decides whether the agent is needed, the agent
+proposes, and the gate (01) checks writes before they run.
+
+Planned: OPC-UA brownfield tag mapping, alarm flood triage, verifying the agent's
+answers against its tool results.
 
 ## Setup
 
