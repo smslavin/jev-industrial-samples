@@ -1,0 +1,44 @@
+{
+  "process": "Water treatment plant, objects from the AvevaWaterOPC galaxy. Raw water pumps RawWater_01 and RawWater_02 (both duty, powered from MCC_Intake) feed Clarifier_01, then filters, then UV_01 (duty) and UV_02 (standby). Chlorine_01 doses sodium hypochlorite, paced on plant flow and trimmed on the clearwell residual analyzer AIT_520. Fluoride_01 doses fluoride, paced on plant flow. Treated water collects in FinishedWater_01 (clearwell). HighService_01 (duty) and HighService_02 (standby) pump to distribution. AIT_530 measures chlorine residual leaving the plant. The hypochlorite room has a gas detector, Chlorine_01.GasDetector.",
+  "scenarios": {
+    "intake-power-dip": {
+      "summary": "A voltage dip at the intake MCC trips both raw water pumps; flow-paced dosing and the clearwell follow. An unrelated chlorine gas alarm arrives in the middle of it.",
+      "alarms": [
+        {"time": "04:31:10", "tag": "Fluoride_01.TankLevel", "condition": "Lo", "description": "Fluoride day tank level low", "priority": 3, "state": "ACK", "label": {"role": "independent", "urgency": 1}},
+        {"time": "05:02:44", "tag": "HighService_02.Mode", "condition": "NotAuto", "description": "High service pump 2 not in auto", "priority": 4, "state": "ACK", "label": {"role": "independent", "urgency": 0}},
+        {"time": "06:12:03", "tag": "MCC_Intake.Voltage", "condition": "UnderVoltage", "description": "Intake MCC bus undervoltage", "priority": 2, "state": "UNACK", "label": {"role": "initiating", "urgency": 2}},
+        {"time": "06:12:04", "tag": "RawWater_01.Trip", "condition": "Trip", "description": "Raw water pump 1 tripped", "priority": 2, "state": "UNACK", "label": {"role": "consequence", "urgency": 3}},
+        {"time": "06:12:04", "tag": "RawWater_02.Trip", "condition": "Trip", "description": "Raw water pump 2 tripped", "priority": 2, "state": "UNACK", "label": {"role": "consequence", "urgency": 3}},
+        {"time": "06:12:09", "tag": "RawWater_01.Flow", "condition": "LoLo", "description": "Raw water pump 1 flow low low", "priority": 3, "state": "UNACK", "label": {"role": "consequence", "urgency": 1}},
+        {"time": "06:12:09", "tag": "RawWater_02.Flow", "condition": "LoLo", "description": "Raw water pump 2 flow low low", "priority": 3, "state": "UNACK", "label": {"role": "consequence", "urgency": 1}},
+        {"time": "06:12:11", "tag": "RawWater_01.Pressure", "condition": "Lo", "description": "Raw water pump 1 discharge pressure low", "priority": 3, "state": "UNACK", "label": {"role": "consequence", "urgency": 1}},
+        {"time": "06:12:11", "tag": "RawWater_02.Pressure", "condition": "Lo", "description": "Raw water pump 2 discharge pressure low", "priority": 3, "state": "UNACK", "label": {"role": "consequence", "urgency": 1}},
+        {"time": "06:12:20", "tag": "Clarifier_01.Turbidity", "condition": "Hi", "description": "Clarifier turbidity high", "priority": 4, "state": "UNACK", "repeat": 6, "label": {"role": "nuisance", "urgency": 0}},
+        {"time": "06:12:35", "tag": "Clarifier_01.Level", "condition": "Lo", "description": "Clarifier level low", "priority": 3, "state": "UNACK", "label": {"role": "consequence", "urgency": 2}},
+        {"time": "06:12:44", "tag": "Chlorine_01.FlowRate", "condition": "Lo", "description": "Hypochlorite dosing rate low", "priority": 3, "state": "UNACK", "label": {"role": "consequence", "urgency": 1}},
+        {"time": "06:12:44", "tag": "Fluoride_01.FlowRate", "condition": "Lo", "description": "Fluoride dosing rate low", "priority": 4, "state": "UNACK", "label": {"role": "consequence", "urgency": 1}},
+        {"time": "06:12:52", "tag": "Chlorine_01.GasDetector", "condition": "HiHi", "description": "Hypochlorite room chlorine gas high high", "priority": 2, "state": "UNACK", "label": {"role": "independent", "urgency": 3}},
+        {"time": "06:13:05", "tag": "UV_01.Flow", "condition": "Lo", "description": "UV reactor 1 flow low", "priority": 3, "state": "UNACK", "label": {"role": "consequence", "urgency": 1}},
+        {"time": "06:13:05", "tag": "UV_02.Status", "condition": "NotAvailable", "description": "UV reactor 2 not available", "priority": 4, "state": "ACK", "label": {"role": "independent", "urgency": 0}},
+        {"time": "06:13:40", "tag": "FinishedWater_01.Level", "condition": "Lo", "description": "Clearwell level low", "priority": 2, "state": "UNACK", "label": {"role": "consequence", "urgency": 2}},
+        {"time": "06:14:10", "tag": "HighService_01.Flow", "condition": "Hi", "description": "High service pump 1 flow high", "priority": 4, "state": "UNACK", "repeat": 4, "label": {"role": "nuisance", "urgency": 0}},
+        {"time": "06:16:02", "tag": "FinishedWater_01.Level", "condition": "LoLo", "description": "Clearwell level low low; high service pumps will trip on low suction", "priority": 1, "state": "UNACK", "label": {"role": "consequence", "urgency": 3}}
+      ]
+    },
+    "chlorine-analyzer-failure": {
+      "summary": "The clearwell residual analyzer fails low; the trim loop drives hypochlorite dosing up and the plant starts to overdose. A chattering pressure switch and standing maintenance alarms add noise.",
+      "alarms": [
+        {"time": "03:15:00", "tag": "UV_02.LampHours", "condition": "Hi", "description": "UV reactor 2 lamp replacement due", "priority": 4, "state": "ACK", "label": {"role": "independent", "urgency": 0}},
+        {"time": "05:02:44", "tag": "HighService_02.Mode", "condition": "NotAuto", "description": "High service pump 2 not in auto", "priority": 4, "state": "ACK", "label": {"role": "independent", "urgency": 0}},
+        {"time": "09:40:12", "tag": "AIT_520.Signal", "condition": "BadQuality", "description": "Clearwell chlorine residual analyzer signal bad / out of range low", "priority": 3, "state": "UNACK", "label": {"role": "initiating", "urgency": 2}},
+        {"time": "09:40:15", "tag": "FinishedWater_01.ChlorineResidual", "condition": "LoLo", "description": "Clearwell chlorine residual low low", "priority": 2, "state": "UNACK", "label": {"role": "consequence", "urgency": 2}},
+        {"time": "09:40:30", "tag": "RawWater_02.Pressure", "condition": "Lo", "description": "Raw water pump 2 discharge pressure low", "priority": 4, "state": "UNACK", "repeat": 5, "label": {"role": "nuisance", "urgency": 0}},
+        {"time": "09:41:05", "tag": "Chlorine_01.FlowRate", "condition": "Hi", "description": "Hypochlorite dosing rate high", "priority": 3, "state": "UNACK", "label": {"role": "consequence", "urgency": 2}},
+        {"time": "09:42:20", "tag": "Chlorine_01.FlowRate", "condition": "HiHi", "description": "Hypochlorite dosing rate high high", "priority": 2, "state": "UNACK", "label": {"role": "consequence", "urgency": 3}},
+        {"time": "09:43:00", "tag": "Chlorine_01.TankLevel", "condition": "Lo", "description": "Hypochlorite day tank level low", "priority": 3, "state": "UNACK", "label": {"role": "consequence", "urgency": 1}},
+        {"time": "09:46:30", "tag": "AIT_530.Residual", "condition": "Hi", "description": "Distribution chlorine residual high", "priority": 2, "state": "UNACK", "label": {"role": "consequence", "urgency": 3}},
+        {"time": "09:47:10", "tag": "Clarifier_01.pH", "condition": "Hi", "description": "Clarifier pH high", "priority": 4, "state": "UNACK", "label": {"role": "independent", "urgency": 1}}
+      ]
+    }
+  }
+}
